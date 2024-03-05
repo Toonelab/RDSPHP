@@ -1,11 +1,14 @@
 <?php
-$localhost = "127.0.0.1";
-$username = "root";
-$password = "Blessed2018!";
-$dbname = "class";
+include_once ".env";
+$dbconfig = parse_ini_file(".env");
+
+$host = $dbconfig["DB_HOST"];
+$username = $dbconfig["DB_USERNAME"];
+$password = $dbconfig["DB_PASSWORD"];
+$dbname = $dbconfig["DB_DATABASE"];
 
 // create connection
-$connect = new mysqli($localhost, $username, $password, $dbname);
+$connect = new mysqli($host, $username, $password, $dbname);
 
 // check connection
 if($connect->connect_error) {
