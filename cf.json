@@ -15,6 +15,12 @@ Parameters:
     Type: String
     MinLength: '1'
     MaxLength: '64'
+  SNSEmail:
+    Default: you@example.com
+    Description: Email address to subscribe to the SNS Topic
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access
     Type: 'AWS::EC2::KeyPair::KeyName'
@@ -167,6 +173,13 @@ Resources:
     Properties:
       DisplayName: RDSDB Topic
       TopicName: rdsdb
+  RDSSubscription:
+    Type: 'AWS::SNS::Subscription'
+    DependsOn: RDSTopic
+    Properties:
+      Protocol: email
+      TopicArn: !Ref RDSTopic
+      Endpoint: ${SNSEmail}
 Outputs:
   WebsiteURL:
     Value: !Sub 'http://${EC2Instance.PublicDnsName}/'
