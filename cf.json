@@ -1,0 +1,147 @@
+Metadata:
+  License: Apache-2.0
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  AWS CloudFormation Template to launch EC2 t2.micro with web application.  This
+  will launch an RDS MySQL DB and create Security Groups.
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+  VPC:
+    Description: Choose VPC
+    Type: 'AWS::EC2::VPC::Id'
+  SubnetID:
+    Description: Choose Subnet
+    Type: 'AWS::EC2::Subnet::Id'
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs
+  DBInstanceID:
+    Default: rdsdb
+    Description: RDS DB instance
+    Type: String
+    MinLength: '1'
+    MaxLength: '63'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: >-
+      Must begin with a letter and must not end with a hyphen or contain two
+      consecutive hyphens.
+  DatabaseName:
+    Default: mydb
+    Description: Database name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+  MasterUsername:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+  MasterPassword:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+Resources:
+  EC2Instance:
+    Type: 'AWS::EC2::Instance'
+    DependsOn: MyDB
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      ImageId: !Ref LatestAmiId
+      Tags:
+        - Key: Name
+          Value: Webserver
+      SecurityGroups:
+        - !Ref WebSecurityGroup
+      UserData:
+        'Fn::Base64': !Sub 
+          - |
+            #!/bin/bash
+            dnf update -y
+            dnf install -y git mariadb105-server php8.2-mysqlnd httpd php
+
+            case $(ps -p 1 -o comm | tail -1) in
+            systemd) systemctl enable --now httpd ;;
+            init) chkconfig httpd on; service httpd start ;;
+            *) echo "Error starting httpd (OS not using init or systemd)." 2>&1
+            esac
+
+            cd /var/www/
+            git clone https://github.com/Toonelab/RDSPHP.git
+            mv RDSPHP/* html/
+            sed -i 's/<db_name>/${DatabaseName}/g' /var/www/RDSPHP/.env
+            sed -i 's/<db_user>/${MasterUsername}/g' /var/www/RDSPHP/.env
+            sed -i 's/<db_pass>/${MasterPassword}/g' /var/www/RDSPHP/.env
+            sed -i 's/<db_url>/${Private1}/g' /var/www/RDSPHP/.env
+            mv RDSPHP/.env html/
+            cd /var/www/html/
+            mysql -h ${Private1} -u ${MasterUsername} -p${MasterPassword} ${DatabaseName} < BuildDB.sql
+          - Private1: !GetAtt MyDB.Endpoint.Address
+  IPAddress:
+    Type: 'AWS::EC2::EIP'
+  IPAssoc:
+    Type: 'AWS::EC2::EIPAssociation'
+    Properties:
+      InstanceId: !Ref EC2Instance
+      EIP: !Ref IPAddress
+  WebSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allow SSH and HTTP connections to EC2 instance
+      Tags:
+        - Key: Name
+          Value: WebTier-sg
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+  DBSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allow connections only from Webserver
+      Tags:
+        - Key: Name
+          Value: DBTier-sg
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !GetAtt WebSecurityGroup.GroupId
+  MyDB:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBInstanceIdentifier: !Ref DBInstanceID
+      DBName: !Ref DatabaseName
+      DBInstanceClass: db.t2.micro
+      AllocatedStorage: 20
+      Engine: MySQL
+      EngineVersion: 8.0.35
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterPassword
+      DBParameterGroupName: !Ref RDSParameterGroup
+      VPCSecurityGroups:
+        - 'Fn::GetAtt':
+            - DBSecurityGroup
+            - GroupId
+  RDSParameterGroup:
+    Properties:
+      Description: custom parameter group
+      Family: mysql8.0
+      Parameters:
+        character_set_database: utf32
+      Tags:
+        - Key: Name
+          Value: tut
+    Type: 'AWS::RDS::DBParameterGroup'
+Outputs:
+  WebsiteURL:
+    Value: !Sub 'http://${EC2Instance.PublicDnsName}/'
+    Description: Webserver URL
+  RDSEndpoint:
+    Value: !GetAtt MyDB.Endpoint.Address
+    Description: RDS DB instance endpoint
