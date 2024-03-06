@@ -90,6 +90,10 @@ $results = mysqli_query($connect, $query);
 		.data-table tbody td:empty {
 			background-color: #ffcccc;
 		}
+		.text-center {
+                        text-align: center;
+                        margin-top: 20px; /* Adjust the margin as needed */
+                }
 	</style>
 </head>
 
