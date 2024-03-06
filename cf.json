@@ -179,7 +179,7 @@ Resources:
     Properties:
       Protocol: email
       TopicArn: !Ref RDSTopic
-      Endpoint: ${SNSEmail}
+      Endpoint: !Ref SNSEmail
 Outputs:
   WebsiteURL:
     Value: !Sub 'http://${EC2Instance.PublicDnsName}/'
