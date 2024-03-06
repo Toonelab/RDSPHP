@@ -26,7 +26,20 @@ if(isset($_POST['submit'])) {
 
 		if ($connect->query($query)) {
 
-			echo "<div style='color:#73AD21;text-align:center; padding: 7px'> Information was submitted successfully!</div>";
+                        echo "<div style='color:#73AD21;text-align:center; padding: 7px'> Information was submitted successfully!</div>";
+                        $varArray = array(
+                              "Name: $name",
+                              "Last Name: $secondname",
+                              "Email: $email",
+                              "Gender: $gender",
+                              "Course: $course",
+                              "Description: $description"
+                        );
+                        $snsmessage = implode("\n", $varArray);
+                        $escaped_message = escapeshellarg($snsmessage);
+                        $command = "python3 sns.py $escaped_message";
+                        $output = shell_exec($command);
+//                        echo $output;
 
 		}else {
 			echo "<div style='color:red;text-align:center;padding: 7x'>Error occured while submitting your information. Please try again</div>".$connect->connect_errno;
