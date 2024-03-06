@@ -5,6 +5,16 @@ Description: >-
   AWS CloudFormation Template to launch EC2 t2.micro with web application.  This
   will launch an RDS MySQL DB and create Security Groups.
 Parameters:
+  AccessKey:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+  SecretAccessKey:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+  DefaultRegion:
+    Default: us-west-2
+    Description: Default Region
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access
     Type: 'AWS::EC2::KeyPair::KeyName'
@@ -58,7 +68,7 @@ Resources:
           - |
             #!/bin/bash
             dnf update -y
-            dnf install -y git mariadb105-server php8.2-mysqlnd httpd php
+            dnf install -y git mariadb105-server php8.2-mysqlnd httpd php python3-pip
 
             case $(ps -p 1 -o comm | tail -1) in
             systemd) systemctl enable --now httpd ;;
@@ -72,11 +82,24 @@ Resources:
             sed -i 's/<db_name>/${DatabaseName}/g' /var/www/RDSPHP/.env
             sed -i 's/<db_user>/${MasterUsername}/g' /var/www/RDSPHP/.env
             sed -i 's/<db_pass>/${MasterPassword}/g' /var/www/RDSPHP/.env
+            sed -i 's/<region>/${DefaultRegion}/g' /var/www/RDSPHP/.env
             sed -i 's/<db_url>/${Private1}/g' /var/www/RDSPHP/.env
+            sed -i 's/<topic_arn>/${Private2}/g' /var/www/RDSPHP/.env
+            pip install boto3
+            pip install python-dotenv
+            mkdir /shared
+            mkdir /shared/.aws
+            touch /shared/.aws/credentials
+            echo "[default]" >> /shared/.aws/credentials
+            echo "aws_access_key_id = ${AccessKey}" >> /shared/.aws/credentials
+            echo "aws_secret_access_key = ${SecretAccessKey}" >> /shared/.aws/credentials
+            chmod 644 /shared/.aws/credentials
+            chmod 755 /shared
             mv RDSPHP/.env html/
             cd /var/www/html/
             mysql -h ${Private1} -u ${MasterUsername} -p${MasterPassword} ${DatabaseName} < BuildDB.sql
           - Private1: !GetAtt MyDB.Endpoint.Address
+            Private2: !Ref RDSTopic
   IPAddress:
     Type: 'AWS::EC2::EIP'
   IPAssoc:
@@ -114,6 +137,7 @@ Resources:
           SourceSecurityGroupId: !GetAtt WebSecurityGroup.GroupId
   MyDB:
     Type: 'AWS::RDS::DBInstance'
+    DependsOn: RDSTopic
     Properties:
       DBInstanceIdentifier: !Ref DBInstanceID
       DBName: !Ref DatabaseName
@@ -138,6 +162,11 @@ Resources:
         - Key: Name
           Value: tut
     Type: 'AWS::RDS::DBParameterGroup'
+  RDSTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      DisplayName: RDSDB Topic
+      TopicName: rdsdb
 Outputs:
   WebsiteURL:
     Value: !Sub 'http://${EC2Instance.PublicDnsName}/'
@@ -145,3 +174,6 @@ Outputs:
   RDSEndpoint:
     Value: !GetAtt MyDB.Endpoint.Address
     Description: RDS DB instance endpoint
+  RDSTopicARN:
+    Value: !Ref RDSTopic
+    Description: ARN of the RDSDB Topic
