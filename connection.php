@@ -1,5 +1,4 @@
 <?php
-include_once ".env";
 $dbconfig = parse_ini_file(".env");
 
 $host = $dbconfig["DB_HOST"];
