@@ -128,6 +128,10 @@ $results = mysqli_query($connect, $query);
 			?>
 		</tbody>
 	</table>
+        <br>
+        <div class="text-center">
+            <a href="index.php" class="btn btn-primary">Back to Home</a>
+        </div>
 </body>
 
 </html>
