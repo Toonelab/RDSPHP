@@ -108,7 +108,7 @@ $results = mysqli_query($connect, $query);
 				<th>Lastname</th>
 				<th>Email</th>
 				<th>Gender</th>
-				<th>Course</th>
+				<th>Subject</th>
 				<th>Description</th>
 			</tr>
 		</thead>
@@ -123,7 +123,7 @@ $results = mysqli_query($connect, $query);
 				<td><?php echo $row['last_name']; ?></td>
 				<td><?php echo $row['email']; ?></td>
 				<td><?php echo $row['gender']; ?></td>
-				<td><?php echo $row['course']; ?></td>
+				<td><?php echo $row['subject']; ?></td>
 				<td><?php echo $row['description']; ?></td>
 			</tr>
 			<?php
