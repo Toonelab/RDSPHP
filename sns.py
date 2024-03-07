@@ -4,7 +4,7 @@ import boto3
 from dotenv import load_dotenv
 
 load_dotenv()
-topic = os.getenv('TOPICARN')
+topic = os.getenv('TOPIC_ARN')
 region = os.getenv('REGION')
 
 os.environ['AWS_SHARED_CREDENTIALS_FILE'] = '/shared/.aws/credentials'
