@@ -3,17 +3,17 @@
 <?php
 if(isset($_POST['submit'])) {
 	$name = strip_tags($_POST['name']);
-	$secondname = strip_tags($_POST['secondname']);
+	$lastname = strip_tags($_POST['lastname']);
 	$email = strip_tags($_POST['email']);
 	$gender = strip_tags($_POST['gender']);
-	$course = strip_tags($_POST['course']);
+	$subject = strip_tags($_POST['subject']);
 	$description= strip_tags($_POST['description']);
 	
 	$name = $connect->real_escape_string($name);
-	$secondname = $connect->real_escape_string($secondname);
+	$lastname = $connect->real_escape_string($lastname);
 	$email = $connect->real_escape_string($email);
 	$gender = $connect->real_escape_string($gender);
-	$course = $connect->real_escape_string($course);
+	$subject = $connect->real_escape_string($subject);
 	$description = $connect->real_escape_string($description);
 	
 	
@@ -22,17 +22,17 @@ if(isset($_POST['submit'])) {
 	
 	if ($count==0) {
 		
-		$query = "INSERT INTO user_info(first_name, last_name, email, gender, course, description) VALUES('$name','$secondname','$email','$gender', '$course', '$description')";
+		$query = "INSERT INTO user_info(first_name, last_name, email, gender, course, description) VALUES('$name','$lastname','$email','$gender', '$subject', '$description')";
 
 		if ($connect->query($query)) {
 
                         echo "<div style='color:#73AD21;text-align:center; padding: 7px'> Information was submitted successfully!</div>";
                         $varArray = array(
                               "Name: $name",
-                              "Last Name: $secondname",
+                              "Last Name: $lastname",
                               "Email: $email",
                               "Gender: $gender",
-                              "Course: $course",
+                              "Subject: $subject",
                               "Description: $description"
                         );
                         $snsmessage = implode("\n", $varArray);
