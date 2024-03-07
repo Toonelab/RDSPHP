@@ -22,7 +22,7 @@ if(isset($_POST['submit'])) {
 	
 	if ($count==0) {
 		
-		$query = "INSERT INTO user_info(first_name, last_name, email, gender, course, description) VALUES('$name','$lastname','$email','$gender', '$subject', '$description')";
+		$query = "INSERT INTO user_info(first_name, last_name, email, gender, subject, description) VALUES('$name','$lastname','$email','$gender', '$subject', '$description')";
 
 		if ($connect->query($query)) {
 
