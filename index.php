@@ -26,7 +26,7 @@
                     <div class="row">
                         <div class="col-md-12">
                             <p class="lead text-dang" style="margin: 12px; color:#73AD21;font:bolder;">
-                                Please fill the form below.
+                                Please fill out the form below.
                             </p>
                         </div>
                     </div>
@@ -34,18 +34,16 @@
                 <div class="row padding">
                     <div class="col-md-6 ">
                         <div class="form-group">
-                            <label for="form_name">Firstname</label>
+                            <label for="form_name">Firstname*</label>
                             <input id="form_name" type="text" name="name" class="form-control" placeholder="Please enter your firstname"
-				
                                 required="required" data-error="Firstname is required.">
                             <div class="help-block with-errors"></div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="form_lastname">Lastname</label>
-                            <input id="form_lastname" type="text" name="secondname" class="form-control" 
-					
+                            <label for="form_lastname">Lastname*</label>
+                            <input id="form_lastname" type="text" name="lastname" class="form-control" 
 				placeholder="Please enter your lastname"
                                 required="required" data-error="Lastname is required.">
                             <div class="help-block with-errors"></div>
@@ -55,7 +53,7 @@
                 <div class="row padding">
                     <div class="col-md-12">
                         <div class="form-group">
-                            <label for="form_email">Email</label>
+                            <label for="form_email">Email*</label>
                             <input id="form_email" type="email" name="email" class="form-control" 
 			placeholder="Please enter your email"
                                 required="required" data-error="Valid email is required.">
@@ -79,10 +77,9 @@
                 <div class="row padding">
                     <div class="col-md-12 ">
                         <div class="form-group">
-                            <label for="form_name">Enter course code & course description </label>
-                            <input id="form_name" type="text" name="course" class="form-control"
-				placeholder="Please enter your course code"
-                                required="required" data-error="Course code is required.">
+                            <label for="form_name">Subject and description</label>
+                            <input id="form_name" type="text" name="subject" class="form-control"
+				placeholder="Please enter the subject of your request">
                             <div class="help-block with-errors"></div>
                         </div>
                     </div>
@@ -90,8 +87,7 @@
                 <div class="row padding">
                     <div class="col-md-12" >
                         <div class="form-group">
-                            <input id="textbox" type="text" name="description" class="form-control" placeholder="Please enter the Description"
-                                required="required" data-error="Description is required.">
+                            <input id="textbox" type="text" name="description" class="form-control" placeholder="Please enter the Description">
                             <div class="help-block with-errors"></div>
                         </div>
                     </div>
