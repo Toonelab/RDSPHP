@@ -93,8 +93,7 @@ Resources:
             sed -i 's/<topic_arn>/${Private2}/g' /var/www/RDSPHP/.env
             pip install boto3
             pip install python-dotenv
-            mkdir /shared
-            mkdir /shared/.aws
+            mkdir -p/shared/.aws
             touch /shared/.aws/credentials
             echo "[default]" >> /shared/.aws/credentials
             echo "aws_access_key_id = ${AccessKey}" >> /shared/.aws/credentials
