@@ -4,6 +4,6 @@ CREATE TABLE user_info (
     last_name VARCHAR(50),
     email VARCHAR(100),
     gender ENUM('male', 'female', 'other'),
-    course VARCHAR(100),
+    subject VARCHAR(100),
     description TEXT
 );
