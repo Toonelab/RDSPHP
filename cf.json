@@ -57,6 +57,35 @@ Parameters:
   MasterPassword:
     Type: 'AWS::SSM::Parameter::Value<String>'
 Resources:
+  EC2Role:
+    Type: AWS::IAM::Role
+    DependsOn: MyDB
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonRDSFullAccess
+      Policies:
+        - PolicyName: RDSConnectPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: Statement1
+                Effect: Allow
+                Action: 
+                  - rds-db:connect
+                Resource: 
+                  - !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:db/${MyDB}"
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2Role
   EC2Instance:
     Type: 'AWS::EC2::Instance'
     DependsOn: MyDB
@@ -64,6 +93,7 @@ Resources:
       InstanceType: t2.micro
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref EC2InstanceProfile
       Tags:
         - Key: Name
           Value: Webserver
@@ -100,9 +130,18 @@ Resources:
             echo "aws_secret_access_key = ${SecretAccessKey}" >> /shared/.aws/credentials
             chmod 644 /shared/.aws/credentials
             chmod 755 /shared
+            cp -R /shared/.aws /root/
             mv RDSPHP/.env html/
             cd /var/www/html/
             mysql -h ${Private1} -u ${MasterUsername} -p${MasterPassword} ${DatabaseName} < BuildDB.sql
+            mysql -h ${Private1} -u ${MasterUsername} -p${MasterPassword} -e "CREATE USER 'db_iam' IDENTIFIED WITH AWSAuthenticationPlugin as 'RDS';"
+            mysql -h ${Private1} -u ${MasterUsername} -p${MasterPassword} -e "GRANT ALL PRIVILEGES ON ${DatabaseName}.* TO 'db_iam'@'%';"
+            mkdir /var/mysql-certs/ -p
+            cd /var/mysql-certs/
+            curl -O https://truststore.pki.rds.amazonaws.com/us-west-2/us-west-2-bundle.pem
+            aws rds generate-db-auth-token --hostname ${Private1} --port 3306 --username db_iam >> .token
+            TOKEN="$(cat .token)"
+            mysql -h ${Private1} -u db_iam --ssl-ca=/var/mysql-certs/us-west-2-bundle.pem --ssl-verify-server-cert --password="$TOKEN" -e "show databases;" >> out.txt
           - Private1: !GetAtt MyDB.Endpoint.Address
             Private2: !Ref RDSTopic
   IPAddress:
@@ -153,6 +192,8 @@ Resources:
       MasterUsername: !Ref MasterUsername
       MasterUserPassword: !Ref MasterPassword
       DBParameterGroupName: !Ref RDSParameterGroup
+      BackupRetentionPeriod: 0
+      EnableIAMDatabaseAuthentication: true
       VPCSecurityGroups:
         - 'Fn::GetAtt':
             - DBSecurityGroup
